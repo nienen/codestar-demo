@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >-
+  (Backend) API gateway + Lambda
+
+Resources:
+  IamRoleForApiGateway:
+        Description: Create service role in IAM for AWS API Gateway
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName: APIGatewayRole
+            AssumeRolePolicyDocument:
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                        Service: [apigateway.amazonaws.com]
+                      Action: sts:AssumeRole
+            ManagedPolicyArns:
+                - !Sub 'arn:aws:iam::aws:policy/AWSLambda_FullAccess'
+                - !Sub 'arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs'
+
+  # IAMRoleForLambda:
+  #   Type: AWS::IAM::Role
+  #   Properties: 
+  #     RoleName: roleforbackendlambda
+  #     AssumeRolePolicyDocument:
+  #               Statement:
+  #                   - Effect: Allow
+  #                     Principal:
+  #                       Service: [lambda.amazonaws.com]
+  #                     Action: sts:AssumeRole
+  # IAMPolicyForRole:
+  #   Type: AWS::IAM::Policy
+  #   Properties:
+  #     PolicyName: LambdaPolicyForBackend
+  #     PolicyDocument:
+  #       Version: "2012-10-17"
+  #       Statement:
+  #         - Effect: Allow
+  #           Action:
+  #             - rekognition:*
+  #             - s3:*
+  #             - apigateway:*
+  #           Resource: '*'
+  #     Roles: 
+  #       - !Ref IAMRoleForLambda
+
+  ApiGatewayApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: lab-api
+      StageName: test
+      ###
+      Cors:
+        AllowMethods: "'POST'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+        MaxAge: "'3600'"
+      ###
+      Auth:
+        InvokeRole: !GetAtt IamRoleForApiGateway.Arn
+        ApiKeyRequired: false
+        ResourcePolicy:
+          CustomStatements: [
+            {
+              "Effect": "Allow",
+              "Principal": "*",
+              "Action": "execute-api:Invoke",
+              "Resource": "execute-api:/*"
+            }
+          ]
+
+  DetectionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: HelloFromLambda-myname
+      #Role: !GetAtt IAMRoleForLambda.Arn
+      PackageType: Zip
+      Runtime: python3.7
+      Handler: index.lambda_handler
+      Tracing: Active
+      Events: 
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: post
+            RestApiId: !Ref ApiGatewayApi
+      InlineCode: |
+        import json
+        def lambda_handler(event, context):
+          return{
+            "statusCode":200,
+            'headers':{
+                'Access-Control-Allow-Origin': '*'
+            },
+            "body": json.dumps({
+                "message": "Hello from Lambda"
+                })
+          }
+Outputs:
+  APIEndpoint:
+    Value: !Sub
+      - https://${API_ID}.execute-api.us-east-1.amazonaws.com/test/hello
+      - { API_ID:  !Ref ApiGatewayApi}

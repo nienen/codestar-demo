@@ -39,16 +39,14 @@ local computer. If you haven't, do that first. You can find instructions in the 
         $ source .venv/bin/activate
 
 3. Install the SAM CLI. For details see 
-    $ sudo yum update -y
-    $ sudo yum install -y amazon-linux-extras
-    $ sudo yum clean metadata && sudo yum install php-cli php-pdo php-fpm php-json php-mysqlnd
-    $ sudo service docker start
-    $ sudo usermod -a -G docker ec2-user
-    $ docker ps
-    $ upload SAM zip (https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip)
-    $ unzip aws-sam-cli-linux-x86_64.zip -d sam-installation
-    $ 
-
+    - $ sudo yum update -y
+    - $ sudo yum install -y amazon-linux-extras
+    - $ sudo yum clean metadata && sudo yum install php-cli php-pdo php-fpm php-json php-mysqlnd
+    - $ sudo service docker start
+    - $ sudo usermod -a -G docker ec2-user
+    - $ docker ps
+    - $ upload SAM zip (https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip)
+    - $ unzip aws-sam-cli-linux-x86_64.zip -d sam-installation
 
 4. Start the development server:
 
